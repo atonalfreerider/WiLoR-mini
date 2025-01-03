@@ -35,11 +35,35 @@ with tqdm(total=frame_count, desc="Processing video") as pbar:
         right_hands = []
 
         for output in outputs:
-            hand_pose = np.array(output['wilor_preds']['hand_pose']).tolist()
+            # Convert keypoints array to list of xyz objects
+            keypoints = output['wilor_preds']['pred_keypoints_3d']
+            global_orient = output['wilor_preds']['global_orient']
+            
+            # Convert nested arrays to list of xyz dictionaries
+            joints = []
+            for joint in keypoints[0]:  # keypoints is triple nested
+                joints.append({
+                    'x': float(joint[0]),
+                    'y': float(joint[1]),
+                    'z': float(joint[2])
+                })
+            
+            # Convert global_orient to xyz dictionary
+            wrist_orient = {
+                'x': float(global_orient[0][0][0]),
+                'y': float(global_orient[0][0][1]),
+                'z': float(global_orient[0][0][2])
+            }
+
+            hand_data = {
+                'joints': joints,
+                'wrist_orientation': wrist_orient
+            }
+
             if output['is_right'] == 0.0:
-                left_hands.append(hand_pose)
+                left_hands.append(hand_data)
             else:
-                right_hands.append(hand_pose)
+                right_hands.append(hand_data)
 
         hand_poses[frame_number] = {
             'left_hands': left_hands,
