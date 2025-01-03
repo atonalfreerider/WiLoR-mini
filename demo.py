@@ -36,8 +36,10 @@ with tqdm(total=frame_count, desc="Processing video") as pbar:
 
         for output in outputs:
             # Convert keypoints array to list of xyz objects
-            keypoints = output['wilor_preds']['pred_keypoints_3d']
-            global_orient = output['wilor_preds']['global_orient']
+            keypoints = output['wilor_preds']['pred_keypoints_3d'] # (1, 21, 3)
+            global_orient = output['wilor_preds']['global_orient'] # (1, 1, 3)
+            pred_cam_t_full = output['wilor_preds']['pred_cam_t_full'] # (1, 3)
+            pred_cam = output['wilor_preds']['pred_cam'] # (1, 3)
             
             # Convert nested arrays to list of xyz dictionaries
             joints = []
@@ -55,9 +57,25 @@ with tqdm(total=frame_count, desc="Processing video") as pbar:
                 'z': float(global_orient[0][0][2])
             }
 
+            # Convert pred_cam_t_full to xyz dictionary
+            cam_t_full = {
+                'x': float(pred_cam_t_full[0][0]),
+                'y': float(pred_cam_t_full[0][1]),
+                'z': float(pred_cam_t_full[0][2])
+            }
+
+            # Convert pred_cam to xyz dictionary
+            cam = {
+                'x': float(pred_cam[0][0]),
+                'y': float(pred_cam[0][1]),
+                'z': float(pred_cam[0][2])
+            }
+
             hand_data = {
                 'joints': joints,
-                'wrist_orientation': wrist_orient
+                'wrist_orientation': wrist_orient,
+                'camera_translation_full': cam_t_full,
+                'camera_parameters': cam
             }
 
             if output['is_right'] == 0.0:
